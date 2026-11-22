@@ -1,0 +1,47 @@
+# Each site lives only under its secret path, /<token>/. Everything else, including /, is a 404, and
+# directory browsing is off, so no listing reveals a path. Hidden dotfiles keep each site's .source
+# (its folder path on the host) private.
+
+(headers) {
+	header {
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		Referrer-Policy "no-referrer"
+		# private keeps shared caches, Cloudflare's edge included, from storing anything, so a publish
+		# or unpublish is live on the next request; no-cache makes browsers recheck, and unchanged
+		# files answer 304
+		Cache-Control "private, no-cache"
+		# Browsers take each file as its Content-Type says; an extensionless file is never sniffed into
+		# a script-running page
+		X-Content-Type-Options "nosniff"
+		# A sandboxed page fetches its own files cross-origin (fetch, module scripts, fonts); the
+		# secret path still gates every file
+		Access-Control-Allow-Origin "*"
+		-Server
+	}
+}
+
+:80 {
+	import headers
+	# Every site shares this origin, so its browser storage would be shared too. Sandboxing without
+	# allow-same-origin gives each document a unique opaque origin: no localStorage, IndexedDB,
+	# cookies, or service workers, so no site's script can read state or URLs another site left
+	# behind. It applies to every response except PDFs, which Chromium's PDF viewer refuses to render
+	# when sandboxed; on images, scripts, and other subresources the sandbox has no effect.
+	@documents not path *.pdf
+	header @documents Content-Security-Policy "sandbox allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
+	# Link-preview fetchers and AI crawlers get 403, so a URL pasted into a chat or a prompt is not
+	# fetched by the service on the other end
+	@bots header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|slackbot|whatsapp|telegrambot|discordbot|linkedinbot|skypeuripreview|redditbot|embedly|pinterest|iframely|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|anthropic|perplexity|ccbot|bytespider|amazonbot|applebot|meta-externalagent)
+	respond @bots 403
+	# Uptime check for monitoring; says nothing about which sites exist
+	respond /healthz "ok" 200
+	encode zstd gzip
+	root * /share/sites
+	file_server {
+		hide .*
+	}
+	# Error responses (the 404s) are built separately and need the headers again
+	handle_errors {
+		import headers
+	}
+}

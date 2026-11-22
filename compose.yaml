@@ -1,0 +1,17 @@
+services:
+  web:
+    image: caddy:2.11.9-alpine
+    command: caddy run --config /share/Caddyfile --adapter caddyfile
+    ports:
+      - "127.0.0.1:${PORT}:80"
+    volumes:
+      # The whole repo rather than the single Caddyfile: git writes files under
+      # new inodes, and a single-file bind mount keeps reading the old one.
+      # Caddy serves only /share/sites from it.
+      - .:/share:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 30s
+      start_period: 10s
+      start_interval: 1s
+    restart: unless-stopped

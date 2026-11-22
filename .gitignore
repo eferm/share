@@ -1,0 +1,4 @@
+.env
+
+# Published sites: their folder names are the tokens
+sites/
