@@ -85,15 +85,16 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 
 ## Access log
 
-Page views, one line each (time, visitor IP, status, path, user agent):
+Page views, one line each (time, status, visitor IP, path, user agent), in
+columns wide enough for IPv6 addresses and a token path with a short query:
 
 ```sh
 docker compose logs -f --no-log-prefix web \
-  | jq -r 'select(.logger | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | [(.ts|floor|todate), .request.headers["Cf-Connecting-Ip"][0], .status, .request.uri, .request.headers["User-Agent"][0][:40]] | @tsv'
+  | jq -r 'def pad(n): . + " " * ([n - length, 1] | max); select(.logger // "" | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | "\(.ts|floor|todate)  \(.status)  \(.request.headers["Cf-Connecting-Ip"][0] | pad(39))\(.request.uri | pad(28))\(.request.headers["User-Agent"][0][:40])"'
 ```
 
 - Caddy names the logger `http.log.access.log0`, so the filter matches the
-  prefix.
+  prefix. Startup and admin lines have no `logger`.
 - Caddy sees cloudflared as the client; `Cf-Connecting-Ip` holds the visitor.
 - The path filter keeps pages and drops their assets. A returning browser's
   assets answer 304 under `no-cache`.
