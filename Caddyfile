@@ -17,7 +17,7 @@
 	# reaches another's cookies or storage. Chromium won't render sandboxed PDFs.
 	@documents not path *.pdf
 	header @documents Content-Security-Policy "sandbox allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
-	@bots header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|slackbot|whatsapp|telegrambot|discordbot|linkedinbot|skypeuripreview|redditbot|embedly|pinterest|iframely|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|anthropic|perplexity|ccbot|bytespider|amazonbot|applebot|meta-externalagent)
+	@bots header_regexp User-Agent (?i)(googlebot|googleother|bingbot|duckduckbot|yandex|baiduspider|applebot|gptbot|chatgpt|oai-searchbot|claude|anthropic|perplexity|ccbot|bytespider|amazonbot|meta-externalagent|meta-externalfetcher|facebookbot|duckassistbot|mistralai|cohere|grok)
 	respond @bots 403
 	respond /healthz "ok" 200
 	encode zstd gzip
