@@ -80,8 +80,9 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   repo mount at `/share`, and a healthcheck on `/healthz` that `make server`
   waits for before reloading.
 - `.env.example` — the host-specific settings, documented.
-- `Makefile` — `publish`, `unpublish`, and `server`, which `publish` runs.
-- `site.sh` — `publish` and `unpublish` for one source folder.
+- `Makefile` — `list`, `publish`, `unpublish`, and `server`, which `publish` runs.
+- `site.sh` — `publish` and `unpublish` for one source folder, and `list`, each
+  site as `<token> -> <source folder>`.
 
 ## Access log
 
@@ -128,9 +129,9 @@ Existing Headers" can rewrite it.
 
 ## Security model
 
-- A token is 12 random bytes as 16 URL-safe characters (96 bits). On a
+- A token is 16 random alphanumeric characters (about 95 bits). On a
   case-insensitive filesystem, the macOS default, lookups ignore case, which
-  leaves about 84 bits.
+  leaves about 83 bits.
 - URLs leak through the people and apps that handle them: forwarding, link
   scanners in corporate email and Gmail, Chrome Enhanced Safe Browsing and Edge
   SmartScreen (cloud fetchers with browser user agents), and the source-URL
@@ -186,7 +187,7 @@ A page's script still sees its own URL and files, so sites follow these rules:
 - `find_site` matches `.source` against an existing folder's resolved path. A
   folder in `sites/` without `.source`, or whose source folder is gone, is
   outside `publish` and `unpublish` and stays served until deleted by hand;
-  `grep . sites/*/.source` beside `ls sites` shows them.
+  `make list` beside `ls sites` shows them.
 - Caddy's `header` directive skips error responses; `handle_errors` imports the
   same snippet.
 - Chromium's PDF viewer refuses to render a PDF served with a CSP sandbox, so

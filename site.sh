@@ -4,15 +4,14 @@
 set -euo pipefail
 shopt -s nullglob
 
-COMMAND="${1:?usage: site publish|unpublish SITE}"
-SITE="$(realpath "${2:?usage: site publish|unpublish SITE}")"
+USAGE="usage: site list | site publish|unpublish SITE"
+COMMAND="${1:?${USAGE}}"
 SITES="$(dirname "${BASH_SOURCE[0]}")/sites"
-HOST="${SHARE_HOST:?SHARE_HOST is unset; run through make}"
-readonly COMMAND SITE SITES HOST
+readonly USAGE COMMAND SITES
 
-# 96 bits as 16 URL-safe characters
+# About 95 bits as 16 alphanumeric characters
 new_token() {
-  openssl rand -base64 12 | tr '+/' '-_'
+  openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | cut -c 1-16
 }
 
 # grep exits 1 on no match (a first publish); other failures return explicitly, since set -e is off
@@ -24,6 +23,7 @@ find_site() {
 }
 
 publish() {
+  local host="${SHARE_HOST:?SHARE_HOST is unset; run through make}"
   if [[ ! -f "${SITE}/index.html" ]]; then
     printf '%s/index.html is missing; the site URL would be a 404\n' "${SITE}" >&2
     exit 1
@@ -42,7 +42,7 @@ publish() {
   rsync -a --delete --safe-links --no-specials --no-devices --exclude='.*' -- "${SITE}/" "${site}/"
 
   local url
-  url="https://${HOST}/$(basename "${site}")/"
+  url="https://${host}/$(basename "${site}")/"
   local status
   status="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "${url}")"
   printf '%s  %s\n' "${status}" "${url}"
@@ -62,7 +62,18 @@ unpublish() {
   printf '%s is offline\n' "${SITE}"
 }
 
+list() {
+  local source
+  for source in "${SITES}"/*/.source; do
+    printf '%s -> %s\n' "$(basename "$(dirname "${source}")")" "$(<"${source}")"
+  done
+}
+
 case "${COMMAND}" in
-  publish) publish ;;
-  unpublish) unpublish ;;
+  list) list ;;
+  publish | unpublish)
+    SITE="$(realpath "${2:?${USAGE}}")"
+    readonly SITE
+    "${COMMAND}"
+    ;;
 esac

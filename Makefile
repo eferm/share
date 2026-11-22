@@ -1,7 +1,10 @@
 include .env
 export SHARE_HOST
 
-.PHONY: publish unpublish server
+.PHONY: list publish unpublish server
+
+list:
+	./site.sh list
 
 publish: server
 	./site.sh publish "$(SITE)"

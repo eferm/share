@@ -69,10 +69,10 @@ or delete the old folder in `sites/` afterwards.
 ## List sites
 
 ```sh
-grep . sites/*/.source
+make list
 ```
 
-Each line is `sites/<token>/.source:<source folder>`.
+Each line is `<token> -> <source folder>`.
 
 ## Update the host
 
