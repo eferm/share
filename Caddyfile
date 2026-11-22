@@ -13,6 +13,12 @@
 
 :80 {
 	import headers
+	# Access log on stdout, read with `docker compose logs`
+	log {
+		output stdout
+		format json
+	}
+	log_skip /healthz
 	# All sites share one origin; without allow-same-origin each document gets its own, so no site
 	# reaches another's cookies or storage. Chromium won't render sandboxed PDFs.
 	@documents not path *.pdf
