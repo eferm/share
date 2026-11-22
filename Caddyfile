@@ -1,0 +1,33 @@
+(headers) {
+	header {
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		Referrer-Policy "no-referrer"
+		# private: Cloudflare stores nothing, so publish and unpublish are live immediately
+		Cache-Control "private, no-cache"
+		X-Content-Type-Options "nosniff"
+		# A sandboxed page's own fetches, module scripts, and fonts are cross-origin
+		Access-Control-Allow-Origin "*"
+		-Server
+	}
+}
+
+:80 {
+	import headers
+	# All sites share one origin; without allow-same-origin each document gets its own, so no site
+	# reaches another's cookies or storage. Chromium won't render sandboxed PDFs.
+	@documents not path *.pdf
+	header @documents Content-Security-Policy "sandbox allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
+	@bots header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|slackbot|whatsapp|telegrambot|discordbot|linkedinbot|skypeuripreview|redditbot|embedly|pinterest|iframely|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|anthropic|perplexity|ccbot|bytespider|amazonbot|applebot|meta-externalagent)
+	respond @bots 403
+	respond /healthz "ok" 200
+	encode zstd gzip
+	root * /share/sites
+	file_server {
+		# .source holds the site's host path
+		hide .*
+	}
+	# header skips error responses
+	handle_errors {
+		import headers
+	}
+}

@@ -1,0 +1,16 @@
+services:
+  web:
+    image: caddy:2.11.9-alpine
+    command: caddy run --config /share/Caddyfile --adapter caddyfile
+    ports:
+      - "127.0.0.1:${PORT}:80"
+    volumes:
+      # The whole repo: a single-file mount of the Caddyfile keeps the old inode
+      # after git replaces the file
+      - .:/share:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 30s
+      start_period: 10s
+      start_interval: 1s
+    restart: unless-stopped
