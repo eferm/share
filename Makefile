@@ -4,14 +4,13 @@ export SHARE_HOST
 .PHONY: list publish unpublish server
 
 list:
-	@find sites -mindepth 2 -maxdepth 2 -name .source -exec grep -H . {} + \
-	  | sed 's|^sites/\([^/]*\)/\.source:|\1 -> |' | sort
+	./sites.sh list
 
 publish: server
-	./deploy.sh publish "$(SITE)"
+	./sites.sh publish "$(SITE)"
 
 unpublish:
-	./deploy.sh unpublish "$(SITE)"
+	./sites.sh unpublish "$(SITE)"
 
 # --wait: the reload needs Caddy's admin API up
 server:
