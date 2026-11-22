@@ -41,7 +41,7 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 ## Invariants
 
 - The token is the only access control. Tokens appear only as folder names in
-  `sites/` and in the URLs handed to visitors.
+  `sites/`, in the URLs handed to visitors, and in the access log.
 - Only published sites answer; every other path, `/` included, is a 404.
   Directory browsing is off, and dotfiles are hidden at every level, `.source`
   included.
@@ -59,8 +59,9 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   in `@bots` in the Caddyfile, get 403. Every other client is served,
   link-preview fetchers included: a URL reaches them only when someone holding
   it shares it. `/healthz` answers `ok` for uptime monitoring.
-- The host serves static files only, keeps no access logs, and has no per-site
-  configuration.
+- The host serves static files only and has no per-site configuration. Caddy
+  writes an access log to stdout, `/healthz` excluded, which Docker keeps until
+  the container is recreated.
 - A site's copy holds only regular files and symlinks inside its source folder:
   dotfiles, symlinks that point outside, FIFOs, and device files stay out
   (`rsync --exclude='.*' --safe-links --no-specials --no-devices`).
@@ -72,9 +73,9 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 ## Files
 
 - `Caddyfile` — the `(headers)` snippet, imported by the site and by
-  `handle_errors`; the sandbox on `@documents`; the `@bots` user-agent block;
-  `/healthz`; compression; static files from `/share/sites` with dotfiles
-  hidden.
+  `handle_errors`; the access log; the sandbox on `@documents`; the `@bots`
+  user-agent block; `/healthz`; compression; static files from `/share/sites`
+  with dotfiles hidden.
 - `compose.yaml` — the pinned Caddy image, `127.0.0.1:${PORT}`, the read-only
   repo mount at `/share`, and a healthcheck on `/healthz` that `make server`
   waits for before reloading.
@@ -120,6 +121,8 @@ Existing Headers" can rewrite it.
   metadata macOS attaches to downloads. A URL lasts until its token is retired;
   retire it and publish again when one spreads. End-to-end encrypted messengers
   that build link previews on the sender's device are the safest channel.
+- The access log holds every requested URL, tokens included, so it reveals every
+  visited site to anyone who can read Docker logs on the host.
 - The origin answers nothing that names a site. The remaining path to a token is
   a visitor's browser, covered below.
 

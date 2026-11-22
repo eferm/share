@@ -74,6 +74,15 @@ grep . sites/*/.source
 
 Each line is `sites/<token>/.source:<source folder>`.
 
+## Watch visits
+
+On the host, one line per page view (time, visitor IP, status, path, user agent):
+
+```sh
+docker compose logs -f --no-log-prefix web \
+  | jq -r 'select(.logger | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | [(.ts|floor|todate), .request.headers["Cf-Connecting-Ip"][0], .status, .request.uri, .request.headers["User-Agent"][0][:40]] | @tsv'
+```
+
 ## Update the host
 
 `git pull`, then `make server` to apply Caddyfile and Compose changes without
