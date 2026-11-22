@@ -1,2 +1,4 @@
 .env
-sites/
+sites/*
+!sites/.gitkeep
+.cloudflare/

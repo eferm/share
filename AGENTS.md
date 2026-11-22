@@ -54,8 +54,11 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   sandboxed.
 - Shared caches, Cloudflare's included, store nothing (`private`), so a publish
   or unpublish is live on the next request.
-- Link-preview fetchers and AI crawlers, matched by user agent in the Caddyfile,
-  get 403. `/healthz` answers `ok` for uptime monitoring.
+- Major search engine indexers and AI providers' clients (training crawlers,
+  AI search, and assistants fetching a page for a user), matched by user agent
+  in `@bots` in the Caddyfile, get 403. Every other client is served,
+  link-preview fetchers included: a URL reaches them only when someone holding
+  it shares it. `/healthz` answers `ok` for uptime monitoring.
 - The host serves static files only, keeps no access logs, and has no per-site
   configuration.
 - A site's copy holds only regular files and symlinks inside its source folder:
@@ -94,8 +97,10 @@ Set in the dashboard for the zone holding `SHARE_HOST`:
 
 Further hardening, each a rule matching `http.host eq "<SHARE_HOST>"`:
 
-- **Block verified bots:** a Custom rule on `cf.client.bot` with action Block.
-  It adds Cloudflare's verified-bot signal to the Caddyfile's user-agent list.
+- **Block verified search and AI bots:** a Custom rule with action Block on
+  `cf.verified_bot_category in {"Search Engine Crawler" "AI Crawler"
+  "AI Assistant" "AI Search"}`. It adds Cloudflare's verified-bot signal to the
+  Caddyfile's user-agent list for the same two groups.
 - **Cloudflare Access** with a One-Time PIN allow-list: visitors also prove an
   email address, so a leaked URL alone opens nothing.
 
@@ -140,8 +145,9 @@ A page's script still sees its own URL and files, so sites follow these rules:
 
 ## Extending
 
-- Block another client: add its user-agent token to `@bots` in the Caddyfile,
-  then `make server`.
+- Block a major search engine or AI provider's client: add its user-agent token
+  to `@bots` in the Caddyfile, then `make server`. Other clients stay
+  unblocked; the user-agent list only catches clients that identify themselves.
 - Change headers or origin behavior: edit the Caddyfile, then `make server` (a
   graceful reload).
 - Upgrade Caddy: bump the tag in `compose.yaml` (releases:
