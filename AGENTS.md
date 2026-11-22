@@ -33,7 +33,7 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 
 ## Ownership
 
-- This repo: `Caddyfile`, `compose.yaml`, `Makefile`, `site.sh`.
+- This repo: `Caddyfile`, `compose.yaml`, `Makefile`, `deploy.sh`.
 - Site projects: their content and build. Sites are data on the host.
 - `.env`: the host-specific values, untracked, read by Make and Compose.
 - Cloudflare dashboard: the Tunnel route, DNS, and zone settings.
@@ -80,9 +80,9 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   repo mount at `/share`, and a healthcheck on `/healthz` that `make server`
   waits for before reloading.
 - `.env.example` — the host-specific settings, documented.
-- `Makefile` — `list`, `publish`, `unpublish`, and `server`, which `publish` runs.
-- `site.sh` — `publish` and `unpublish` for one source folder, and `list`, each
-  site as `<token> -> <source folder>`.
+- `Makefile` — `publish`, `unpublish`, `server`, which `publish` runs, and
+  `list`, each site as `<token> -> <source folder>`.
+- `deploy.sh` — `publish` and `unpublish` for one source folder.
 
 ## Access log
 
@@ -172,8 +172,8 @@ A page's script still sees its own URL and files, so sites follow these rules:
   graceful reload).
 - Upgrade Caddy: bump the tag in `compose.yaml` (releases:
   <https://github.com/caddyserver/caddy/releases>), then `make server`.
-- `site.sh` targets macOS's bash 3.2 and is ShellCheck-clean
-  (`shellcheck site.sh`).
+- `deploy.sh` targets macOS's bash 3.2 and is ShellCheck-clean
+  (`shellcheck deploy.sh`).
 
 ## Gotchas
 
@@ -203,7 +203,7 @@ A page's script still sees its own URL and files, so sites follow these rules:
   container is up; `docker compose up -d --wait` holds until the healthcheck
   passes.
 - `publish` checks the live URL and accepts 200, or 302 from Cloudflare Access
-  sending the request to its login page. `site.sh` reads `SHARE_HOST` from the
+  sending the request to its login page. `deploy.sh` reads `SHARE_HOST` from the
   environment, which the Makefile exports.
 - A hostname resolved before its DNS record exists stays cached as nonexistent
   for the zone's negative TTL, home routers included. Check new routes over

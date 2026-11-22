@@ -4,10 +4,11 @@
 set -euo pipefail
 shopt -s nullglob
 
-USAGE="usage: site list | site publish|unpublish SITE"
-COMMAND="${1:?${USAGE}}"
+COMMAND="${1:?usage: deploy publish|unpublish SITE}"
+SITE="$(realpath "${2:?usage: deploy publish|unpublish SITE}")"
 SITES="$(dirname "${BASH_SOURCE[0]}")/sites"
-readonly USAGE COMMAND SITES
+HOST="${SHARE_HOST:?SHARE_HOST is unset; run through make}"
+readonly COMMAND SITE SITES HOST
 
 # About 95 bits as 16 alphanumeric characters
 new_token() {
@@ -23,7 +24,6 @@ find_site() {
 }
 
 publish() {
-  local host="${SHARE_HOST:?SHARE_HOST is unset; run through make}"
   if [[ ! -f "${SITE}/index.html" ]]; then
     printf '%s/index.html is missing; the site URL would be a 404\n' "${SITE}" >&2
     exit 1
@@ -42,7 +42,7 @@ publish() {
   rsync -a --delete --safe-links --no-specials --no-devices --exclude='.*' -- "${SITE}/" "${site}/"
 
   local url
-  url="https://${host}/$(basename "${site}")/"
+  url="https://${HOST}/$(basename "${site}")/"
   local status
   status="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "${url}")"
   printf '%s  %s\n' "${status}" "${url}"
@@ -62,18 +62,7 @@ unpublish() {
   printf '%s is offline\n' "${SITE}"
 }
 
-list() {
-  local source
-  for source in "${SITES}"/*/.source; do
-    printf '%s -> %s\n' "$(basename "$(dirname "${source}")")" "$(<"${source}")"
-  done
-}
-
 case "${COMMAND}" in
-  list) list ;;
-  publish | unpublish)
-    SITE="$(realpath "${2:?${USAGE}}")"
-    readonly SITE
-    "${COMMAND}"
-    ;;
+  publish) publish ;;
+  unpublish) unpublish ;;
 esac
