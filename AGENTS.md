@@ -83,6 +83,21 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 - `Makefile` — `publish`, `unpublish`, and `server`, which `publish` runs.
 - `site.sh` — `publish` and `unpublish` for one source folder.
 
+## Access log
+
+Page views, one line each (time, visitor IP, status, path, user agent):
+
+```sh
+docker compose logs -f --no-log-prefix web \
+  | jq -r 'select(.logger | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | [(.ts|floor|todate), .request.headers["Cf-Connecting-Ip"][0], .status, .request.uri, .request.headers["User-Agent"][0][:40]] | @tsv'
+```
+
+- Caddy names the logger `http.log.access.log0`, so the filter matches the
+  prefix.
+- Caddy sees cloudflared as the client; `Cf-Connecting-Ip` holds the visitor.
+- The path filter keeps pages and drops their assets. A returning browser's
+  assets answer 304 under `no-cache`.
+
 ## Cloudflare settings
 
 Set in the dashboard for the zone holding `SHARE_HOST`:
