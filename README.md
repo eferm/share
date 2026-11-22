@@ -1,14 +1,35 @@
 # share
 
-Private static sites at `https://<host>/<token>/`.
+Private static sites at secret URLs: `https://<host>/<token>/`.
 
 ## Setup
 
-1. `cp .env.example .env` and fill it in.
-2. Point a Cloudflare Tunnel for the hostname at `http://127.0.0.1:<PORT>`, and
-   turn off Always Online and Crawler Hints for the zone. Optional Cloudflare
-   settings are in `AGENTS.md`.
-3. Install Docker.
+On the host, with Docker installed:
+
+1. Clone and configure:
+
+   ```sh
+   git clone https://github.com/eferm/share.git && cd share
+   cp .env.example .env   # set SHARE_HOST and PORT
+   ```
+
+2. Start the server and check it locally:
+
+   ```sh
+   make server
+   curl -s http://127.0.0.1:<PORT>/healthz   # ok
+   ```
+
+3. In Cloudflare, point a Tunnel for `SHARE_HOST` at `http://127.0.0.1:<PORT>`,
+   and turn off Always Online and Crawler Hints for the zone. Optional
+   Cloudflare settings are in `AGENTS.md`.
+
+4. Check it publicly:
+
+   ```sh
+   curl -s https://<SHARE_HOST>/healthz   # ok
+   curl -s -o /dev/null -w '%{http_code}\n' https://<SHARE_HOST>/   # 404
+   ```
 
 ## Publish a site
 
