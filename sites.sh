@@ -62,10 +62,22 @@ unpublish() {
   printf '%s is offline\n' "${SITE}"
 }
 
+# valid: .source names an existing folder; unpublished: valid, and .source is all that's left;
+# orphaned: .source names a missing folder; invalid: no .source
 list() {
-  local source
-  for source in "${SITES}"/*/.source; do
-    printf '%s -> %s\n' "$(basename "$(dirname "${source}")")" "$(<"${source}")"
+  local site
+  for site in "${SITES}"/*/; do
+    site="${site%/}"
+    local source="-"
+    local status="invalid"
+    if [[ -f "${site}/.source" ]]; then
+      source="$(<"${site}/.source")"
+      status="orphaned"
+      [[ ! -d "${source}" ]] || status="valid"
+      [[ "${status}" != valid || -n "$(find "${site}" -mindepth 1 -maxdepth 1 ! -name .source -print -quit)" ]] \
+        || status="unpublished"
+    fi
+    printf '%s -> %s  (%s)\n' "$(basename "${site}")" "${source}" "${status}"
   done
 }
 

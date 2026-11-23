@@ -72,7 +72,15 @@ or delete the old folder in `sites/` afterwards.
 make list
 ```
 
-Each line is `<token> -> <source folder>`.
+Each line is `<token> -> <source folder>  (<status>)`, for every folder in
+`sites/`:
+
+- `valid`: its source folder exists; publish and unpublish manage it.
+- `unpublished`: taken offline with `make unpublish`; publishing its source
+  folder restores the URL.
+- `orphaned`: its source folder was moved or deleted. It stays up until you
+  delete it in `sites/`.
+- `invalid`: it has no `.source`, so nothing manages it. Delete it in `sites/`.
 
 ## Update the host
 

@@ -81,8 +81,8 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   waits for before reloading.
 - `.env.example` — the host-specific settings, documented.
 - `Makefile` — `list`, `publish`, `unpublish`, and `server`, which `publish` runs.
-- `sites.sh` — `list`, each site as `<token> -> <source folder>`, and `publish`
-  and `unpublish` for one source folder.
+- `sites.sh` — `list`, every folder in `sites/` as `<token> -> <source folder>`
+  and its status, and `publish` and `unpublish` for one source folder.
 
 ## Access log
 
@@ -187,7 +187,7 @@ A page's script still sees its own URL and files, so sites follow these rules:
 - `find_site` matches `.source` against an existing folder's resolved path. A
   folder in `sites/` without `.source`, or whose source folder is gone, is
   outside `publish` and `unpublish` and stays served until deleted by hand;
-  `make list` beside `ls sites` shows them.
+  `make list` marks them `orphaned` or `invalid`.
 - Caddy's `header` directive skips error responses; `handle_errors` imports the
   same snippet.
 - Chromium's PDF viewer refuses to render a PDF served with a CSP sandbox, so
