@@ -103,7 +103,7 @@ columns wide enough for IPv6 addresses and a token path with a short query:
 
 ```sh
 docker compose logs -f --no-log-prefix web \
-  | jq -r 'def pad(n): . + " " * ([n - length, 1] | max); select(.logger // "" | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | "\(.ts|floor|todate)  \(.status)  \(.request.headers["Cf-Connecting-Ip"][0] | pad(39))\(.request.uri | pad(28))\(.request.headers["User-Agent"][0][:40])"'
+  | jq -r 'def pad(n): . + " " * ([n - length, 1] | max); select(.logger // "" | startswith("http.log.access")) | select(.request.uri | test("/$|/[^./]+$")) | "\(.ts|floor|todate)  \(.status)  \(.request.headers["Cf-Connecting-Ip"][0] | pad(41))\(.request.uri | pad(28))\(.request.headers["User-Agent"][0][:40])"'
 ```
 
 - Caddy names the logger `http.log.access.log0`, so the filter matches the
