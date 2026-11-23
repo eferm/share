@@ -20,6 +20,17 @@ Cloudflare is configured in its dashboard, see
   restores the same URL. The source folder stays as it is.
 - Deleting `sites/<token>` by hand retires its token; the folder's next publish
   gets a new one.
+- `make list` prints every folder in `sites/` as
+  `<token> -> <source folder>  (<status>)`, `-` standing in for a missing
+  `.source`:
+  - `valid`: `.source` names an existing folder; `publish` and `unpublish`
+    manage the site.
+  - `unpublished`: `valid`, emptied down to `.source` by `unpublish`. The
+    folder's next publish restores the URL.
+  - `orphaned`: `.source` names a folder that was moved or deleted. Whatever
+    the site holds stays served until its `sites/<token>` is deleted.
+  - `invalid`: no `.source`, so nothing manages it. Whatever it holds stays
+    served until deleted.
 
 ## Request path
 
@@ -33,7 +44,7 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 
 ## Ownership
 
-- This repo: `Caddyfile`, `compose.yaml`, `Makefile`, `site.sh`.
+- This repo: `Caddyfile`, `compose.yaml`, `Makefile`, `sites.sh`.
 - Site projects: their content and build. Sites are data on the host.
 - `.env`: the host-specific values, untracked, read by Make and Compose.
 - Cloudflare dashboard: the Tunnel route, DNS, and zone settings.
@@ -41,7 +52,8 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 ## Invariants
 
 - The token is the only access control. Tokens appear only as folder names in
-  `sites/`, in the URLs handed to visitors, and in the access log.
+  `sites/`, in `make list` output, in the URLs handed to visitors, and in the
+  access log.
 - Only published sites answer; every other path, `/` included, is a 404.
   Directory browsing is off, and dotfiles are hidden at every level, `.source`
   included.
@@ -80,8 +92,9 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
   repo mount at `/share`, and a healthcheck on `/healthz` that `make server`
   waits for before reloading.
 - `.env.example` — the host-specific settings, documented.
-- `Makefile` — `publish`, `unpublish`, and `server`, which `publish` runs.
-- `site.sh` — `publish` and `unpublish` for one source folder.
+- `Makefile` — `list`, `publish`, `unpublish`, and `server`, which `publish` runs.
+- `sites.sh` — `list`, every folder in `sites/` as `<token> -> <source folder>`
+  and its status, and `publish` and `unpublish` for one source folder.
 
 ## Access log
 
@@ -128,9 +141,9 @@ Existing Headers" can rewrite it.
 
 ## Security model
 
-- A token is 12 random bytes as 16 URL-safe characters (96 bits). On a
+- A token is 16 random alphanumeric characters (about 95 bits). On a
   case-insensitive filesystem, the macOS default, lookups ignore case, which
-  leaves about 84 bits.
+  leaves about 83 bits.
 - URLs leak through the people and apps that handle them: forwarding, link
   scanners in corporate email and Gmail, Chrome Enhanced Safe Browsing and Edge
   SmartScreen (cloud fetchers with browser user agents), and the source-URL
@@ -139,6 +152,8 @@ Existing Headers" can rewrite it.
   that build link previews on the sender's device are the safest channel.
 - The access log holds every requested URL, tokens included, so it reveals every
   visited site to anyone who can read Docker logs on the host.
+- `make list` prints every token at once; its output shared anywhere (a chat, a
+  ticket, a terminal recording) leaks every site.
 - The origin answers nothing that names a site. The remaining path to a token is
   a visitor's browser, covered below.
 
@@ -171,8 +186,8 @@ A page's script still sees its own URL and files, so sites follow these rules:
   graceful reload).
 - Upgrade Caddy: bump the tag in `compose.yaml` (releases:
   <https://github.com/caddyserver/caddy/releases>), then `make server`.
-- `site.sh` targets macOS's bash 3.2 and is ShellCheck-clean
-  (`shellcheck site.sh`).
+- `sites.sh` targets macOS's bash 3.2 and is ShellCheck-clean
+  (`shellcheck sites.sh`).
 
 ## Gotchas
 
@@ -186,7 +201,7 @@ A page's script still sees its own URL and files, so sites follow these rules:
 - `find_site` matches `.source` against an existing folder's resolved path. A
   folder in `sites/` without `.source`, or whose source folder is gone, is
   outside `publish` and `unpublish` and stays served until deleted by hand;
-  `grep . sites/*/.source` beside `ls sites` shows them.
+  `make list` marks them `orphaned` or `invalid`.
 - Caddy's `header` directive skips error responses; `handle_errors` imports the
   same snippet.
 - Chromium's PDF viewer refuses to render a PDF served with a CSP sandbox, so
@@ -202,7 +217,7 @@ A page's script still sees its own URL and files, so sites follow these rules:
   container is up; `docker compose up -d --wait` holds until the healthcheck
   passes.
 - `publish` checks the live URL and accepts 200, or 302 from Cloudflare Access
-  sending the request to its login page. `site.sh` reads `SHARE_HOST` from the
+  sending the request to its login page. `sites.sh` reads `SHARE_HOST` from the
   environment, which the Makefile exports.
 - A hostname resolved before its DNS record exists stays cached as nonexistent
   for the zone's negative TTL, home routers included. Check new routes over

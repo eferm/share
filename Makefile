@@ -1,13 +1,16 @@
 include .env
 export SHARE_HOST
 
-.PHONY: publish unpublish server
+.PHONY: list publish unpublish server
+
+list:
+	./sites.sh list
 
 publish: server
-	./site.sh publish "$(SITE)"
+	./sites.sh publish "$(SITE)"
 
 unpublish:
-	./site.sh unpublish "$(SITE)"
+	./sites.sh unpublish "$(SITE)"
 
 # --wait: the reload needs Caddy's admin API up
 server:
