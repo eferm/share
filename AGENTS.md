@@ -27,10 +27,10 @@ Cloudflare is configured in its dashboard, see
     manage the site.
   - `unpublished`: `valid`, emptied down to `.source` by `unpublish`. The
     folder's next publish restores the URL.
-  - `orphaned`: `.source` names a folder that was moved or deleted. The site
-    stays served until its `sites/<token>` is deleted.
-  - `invalid`: no `.source`, so nothing manages it. It stays served until
-    deleted.
+  - `orphaned`: `.source` names a folder that was moved or deleted. Whatever
+    the site holds stays served until its `sites/<token>` is deleted.
+  - `invalid`: no `.source`, so nothing manages it. Whatever it holds stays
+    served until deleted.
 
 ## Request path
 
@@ -52,7 +52,8 @@ mounts this repo read-only at `/share` and serves `/share/sites`.
 ## Invariants
 
 - The token is the only access control. Tokens appear only as folder names in
-  `sites/`, in the URLs handed to visitors, and in the access log.
+  `sites/`, in `make list` output, in the URLs handed to visitors, and in the
+  access log.
 - Only published sites answer; every other path, `/` included, is a 404.
   Directory browsing is off, and dotfiles are hidden at every level, `.source`
   included.
@@ -151,6 +152,8 @@ Existing Headers" can rewrite it.
   that build link previews on the sender's device are the safest channel.
 - The access log holds every requested URL, tokens included, so it reveals every
   visited site to anyone who can read Docker logs on the host.
+- `make list` prints every token at once; its output shared anywhere (a chat, a
+  ticket, a terminal recording) leaks every site.
 - The origin answers nothing that names a site. The remaining path to a token is
   a visitor's browser, covered below.
 

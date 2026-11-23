@@ -73,9 +73,10 @@ list() {
     if [[ -f "${site}/.source" ]]; then
       source="$(<"${site}/.source")"
       status="orphaned"
-      [[ ! -d "${source}" ]] || status="valid"
-      [[ "${status}" != valid || -n "$(find "${site}" -mindepth 1 -maxdepth 1 ! -name .source -print -quit)" ]] \
-        || status="unpublished"
+      if [[ -d "${source}" ]]; then
+        status="valid"
+        [[ -n "$(find "${site}" -mindepth 1 -maxdepth 1 ! -name .source -print -quit)" ]] || status="unpublished"
+      fi
     fi
     printf '%s -> %s  (%s)\n' "$(basename "${site}")" "${source}" "${status}"
   done
@@ -87,5 +88,9 @@ case "${COMMAND}" in
     SITE="$(realpath "${2:?${USAGE}}")"
     readonly SITE
     "${COMMAND}"
+    ;;
+  *)
+    printf '%s\n' "${USAGE}" >&2
+    exit 1
     ;;
 esac
