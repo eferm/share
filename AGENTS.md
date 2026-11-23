@@ -20,6 +20,17 @@ Cloudflare is configured in its dashboard, see
   restores the same URL. The source folder stays as it is.
 - Deleting `sites/<token>` by hand retires its token; the folder's next publish
   gets a new one.
+- `make list` prints every folder in `sites/` as
+  `<token> -> <source folder>  (<status>)`, `-` standing in for a missing
+  `.source`:
+  - `valid`: `.source` names an existing folder; `publish` and `unpublish`
+    manage the site.
+  - `unpublished`: `valid`, emptied down to `.source` by `unpublish`. The
+    folder's next publish restores the URL.
+  - `orphaned`: `.source` names a folder that was moved or deleted. The site
+    stays served until its `sites/<token>` is deleted.
+  - `invalid`: no `.source`, so nothing manages it. It stays served until
+    deleted.
 
 ## Request path
 
