@@ -62,23 +62,30 @@ unpublish() {
   printf '%s is offline\n' "${SITE}"
 }
 
-# valid: .source names an existing folder; unpublished: valid, and .source is all that's left;
-# orphaned: .source names a missing folder; invalid: no .source
+has_source() { [[ -f "$1/.source" ]]; }
+source_exists() { [[ -d "$(<"$1/.source")" ]]; }
+has_content() { [[ -n "$(find "$1" -mindepth 1 -maxdepth 1 ! -name .source -print -quit)" ]]; }
+
+# Each check assumes the ones before it hold
+site_status() {
+  if ! has_source "$1"; then
+    printf 'invalid'
+  elif ! source_exists "$1"; then
+    printf 'orphaned'
+  elif ! has_content "$1"; then
+    printf 'unpublished'
+  else
+    printf 'valid'
+  fi
+}
+
 list() {
   local site
   for site in "${SITES}"/*/; do
     site="${site%/}"
-    local source="-"
-    local status="invalid"
-    if [[ -f "${site}/.source" ]]; then
-      source="$(<"${site}/.source")"
-      status="orphaned"
-      if [[ -d "${source}" ]]; then
-        status="valid"
-        [[ -n "$(find "${site}" -mindepth 1 -maxdepth 1 ! -name .source -print -quit)" ]] || status="unpublished"
-      fi
-    fi
-    printf '%s -> %s  (%s)\n' "$(basename "${site}")" "${source}" "${status}"
+    local source
+    source="$(cat "${site}/.source" 2>/dev/null || printf -)"
+    printf '%s -> %s  (%s)\n' "$(basename "${site}")" "${source}" "$(site_status "${site}")"
   done
 }
 
